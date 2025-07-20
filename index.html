@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Simple Chat App</title>
+  <title>Real-Time Chat App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -38,19 +38,48 @@
       font-size: 0.8em;
       color: #666;
     }
+    .sender-you {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .sender-other {
+      color: #2196F3;
+      font-weight: bold;
+    }
   </style>
+  
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <h1>Simple Chat</h1>
+  <h1>Real-Time Chat</h1>
   <div id="chat"></div>
   <div>
-    <input type="text" id="message" placeholder="Type your message here...">
+    <input type="text" id="message" placeholder="Type your message here..." autocomplete="off">
     <button onclick="sendMessage()">Send</button>
   </div>
 
   <script>
     // Get user name
     const username = prompt("Enter your name:") || "Guest";
+    document.title = `${username}'s Chat`;
+    
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3JzW0Xq3Xq3Xq3Xq3Xq3Xq3Xq3Xq3Xq3",
+      authDomain: "your-project-id.firebaseapp.com",
+      databaseURL: "https://your-project-id.firebaseio.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "123456789012",
+      appId: "1:123456789012:web:abcdef1234567890"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const chatRef = database.ref('chat');
     
     // Chat functionality
     function sendMessage() {
@@ -65,8 +94,8 @@
           time: new Date().toLocaleTimeString()
         };
         
-        // Add to chat
-        addMessageToChat(msg);
+        // Push to Firebase
+        chatRef.push(msg);
         
         // Clear input
         input.value = '';
@@ -77,13 +106,23 @@
       const chat = document.getElementById('chat');
       const msgElement = document.createElement('div');
       msgElement.className = 'message';
+      
+      // Different styling for your messages vs others
+      const senderClass = message.sender === username ? 'sender-you' : 'sender-other';
+      
       msgElement.innerHTML = `
-        <strong>${message.sender}:</strong> ${message.text}
+        <span class="${senderClass}">${message.sender}:</span> ${message.text}
         <span class="timestamp">${message.time}</span>
       `;
       chat.appendChild(msgElement);
       chat.scrollTop = chat.scrollHeight;
     }
+    
+    // Listen for new messages
+    chatRef.on('child_added', (snapshot) => {
+      const message = snapshot.val();
+      addMessageToChat(message);
+    });
     
     // Send message on Enter key
     document.getElementById('message').addEventListener('keypress', function(e) {
